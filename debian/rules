@@ -1,0 +1,64 @@
+#!/usr/bin/make -f
+# By Jelmer Vernooij <jelmer@samba.org>
+#
+CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
+CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
+CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
+LDFLAGS:=$(shell dpkg-buildflags --get LDFLAGS)
+
+LDFLAGS += -Wl,--as-needed
+DSOOPT = $(LDFLAGS) -shared -fPIC
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+DESTDIR = $(CURDIR)/debian/tmp
+
+PYVERS = $(shell pyversions -rv)
+export PYTHON="$(shell which `pyversions -r`)"
+
+%:
+	dh $* --with python2,autoreconf,autotools_dev
+
+override_dh_autoreconf:
+	dh_autoreconf --as-needed ./autogen.sh
+
+override_dh_auto_configure:
+	LDFLAGS=-Wl,--as-needed ./configure \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--with-modulesdir=/usr/lib/$(DEB_HOST_MULTIARCH)/openchange \
+		--disable-pymapi \
+		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
+	# Urgh
+	sed -i -e 's/site-packages/dist-packages/' config.mk
+
+override_dh_auto_test:
+	$(MAKE) check
+
+override_dh_auto_build:
+	test -d bin || mkdir bin
+	test -d setup/mapistore/ || mkdir setup/mapistore/
+	$(MAKE) datadir=/usr/share/openchange LDFLAGS="$(LDFLAGS)" DSOOPT="$(DSOOPT)" all
+
+override_dh_auto_clean:
+	[ ! -f config.mk ] || $(MAKE) distclean
+
+override_dh_auto_install:
+	mkdir -p $(DESTDIR)/usr/lib/nagios/plugins
+	$(MAKE) datadir=/usr/share/openchange install installman DESTDIR=$(DESTDIR) MANUALLY_CREATE_SYMLINKS=yes
+	mv $(DESTDIR)/usr/lib/$(DEB_HOST_MULTIARCH)/nagios/check_exchange \
+	   $(DESTDIR)/usr/lib/nagios/plugins/check_exchange 
+	rm -rf $(DESTDIR)/usr/modules
+	# Don't install the testsuite for now
+	rm -f $(DESTDIR)/usr/torture/openchange.so
+	rm -rf $(DESTDIR)/usr/share/openchange/mapitest
+	rm -f $(DESTDIR)/usr/bin/check_fasttransfer
+	rm -f $(DESTDIR)/usr/bin/test_asyncnotif
+
+override_dh_install:
+	dh_install --sourcedir=debian/tmp --list-missing --fail-missing
+
+get-orig-source:
+	./debian/build-orig.sh
+
+override_dh_strip:
+	dh_strip --dbg-package=openchange-dbg

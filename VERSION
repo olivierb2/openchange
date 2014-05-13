@@ -1,0 +1,38 @@
+########################################################
+# OPENCHANGE Version                                   #
+#                                                      #
+# script/mkversion.sh                                  #
+# will use this file to create                         #
+# libmapi/version.h                                    #
+#                                                      #
+########################################################
+
+########################################################
+# To mark GIT snapshots this should be set to 'yes'    #
+# in the development BRANCH, and set to 'no' only in   #
+# the release BRANCH                                   #
+#                                                      #
+# <MAJOR>.<MINOR>[...]-GIT-build-xxx                   #
+#                                                      #
+# e.g. OPENCHANGE_VERSION_IS_GIT_SNAPSHOT=yes          #
+#  ->  "0.7-GIT-build-199"                             #
+########################################################
+OPENCHANGE_VERSION_IS_GIT_SNAPSHOT=no
+
+
+#############################################################
+# This is for specifying a release nickname                 #
+#                                                           #
+# e.g. OPENCHANGE_VERSION_RELEASE_NICKNAME=Nicky Nickname   #
+#  ->  "0.7 (Nicky Nickname)"                               #
+#############################################################
+OPENCHANGE_VERSION_RELEASE_NICKNAME=Quadrant
+
+
+#############################################################
+# This is for specifying a release number                   #
+#                                                           #
+# e.g. OPENCHANGE_VERSION_RELEASE_VERSION=0.8.2             #
+#  ->  "0.8.2 (Nicky Nickname)"                             #
+#############################################################
+OPENCHANGE_VERSION_RELEASE_NUMBER=2.1
